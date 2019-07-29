@@ -7,43 +7,6 @@ load("human/GTEx_gene_count_res/human_gtf_ensembl_trans.RData")
 
 
 
-# ##########   score
-# score <- read.table("ANNOTATION/Rhesus_human_trans_similarity_score.txt")
-# colnames(score) <- c("Rhesus_transcript_id", "Human_transcript_id", 
-#                      "identity_percent", "alignment_length", "mismatchs",
-#                      "gap_openings", "qurey_start", "qurey_end", "Subject_start",
-#                      "Subject_end", "e_value", "bit_score")
-# score <- insertCol(as.matrix(score), 2, 
-#                    v=gtf_ensembl_trans[score$Rhesus_transcript_id,]$gene_id, 
-#                    cName="Rhesus_gene_id")
-# score <- insertCol(as.matrix(score), 4, 
-#                    v=human_gtf_ensembl_trans[score[,"Human_transcript_id"],]$gene_id, 
-#                    cName="Human_gene_id")
-# score <- data.frame(score)
-# score <- data.frame(link=paste(score$Rhesus_gene_id, score$Human_gene_id, sep = "_"), score)
-# head(score)
-# 
-# 
-# ######### orth
-# orth_genes <- read.table("ANNOTATION/humanGRCH38_Rhesus_orth_genes_one2one.txt")
-# colnames(orth_genes) <- c("Human_gene_id", "Rhesus_gene_id", "Homologous_type")
-# rownames(orth_genes) <- paste(orth_genes$Rhesus_gene_id, orth_genes$Human_gene_id, sep="_")
-# head(orth_genes)
-# dim(orth_genes) # 19810     3
-# 
-# 
-# orth_score <- score[score$link %in% rownames(orth_genes),]
-# head(orth_score)
-# dim(orth_score) # 587111     15
-# 
-# 
-# hist(as.numeric(score$identity_percent))
-# hist(as.numeric(score$bit_score))
-# hist(as.numeric(orth_score$identity_percent))
-# hist(as.numeric(orth_score$bit_score))
-
-
-
 #######################################################################
 #                             human gtf                               #            
 #######################################################################

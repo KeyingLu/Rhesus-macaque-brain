@@ -44,7 +44,7 @@ if (!gsg$allOK)
   # Remove the offending genes and samples from the data:
   datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
 }
-dim(datExpr0)  ## 407 23651
+dim(datExpr0)  ## 408 23651
 #=====================================================================================
 #  Code chunk 5
 #=====================================================================================

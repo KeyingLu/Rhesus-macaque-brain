@@ -7,6 +7,7 @@ This repository contains the code for the literature "Transcriptomic and open ch
 The following description is the detail information for each file and folder.
 
 #######
+
 The detail description for each file of the "R" foler is as following:
 
 Rhesus_gene_count.R: This file is the main differential analysis script.
@@ -33,6 +34,7 @@ WGCNA_Rhesus_for_predicted_lncRNA_cortex.R: This file is the co-expression analy
 
 
 #######
+
 The detail description for each file of the "python" foler is as following:
 
 

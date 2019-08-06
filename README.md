@@ -2,7 +2,7 @@
 
 This is the readme file.
 
-This repository contains the code for the literature "Transcriptomic and open chromatin atlas of high-resolution anatomical regions in the rhesus macaque brain". All code was written in the R or python programming language. 
+This repository contains the code for the literature "Transcriptomic and open chromatin atlas of high-resolution anatomical regions in the rhesus macaque brain". All code was written in the R programming language. 
 
 The following description is the detail information for each file and folder.
 
@@ -33,9 +33,6 @@ WGCNA_Rhesus_for_predicted_lncRNA.R: This file is the co-expression analysis cod
 WGCNA_Rhesus_for_predicted_lncRNA_cortex.R: This file is the co-expression analysis code using the WGCNA for all cortex samples in predicted lncRNA.
 
 
-#######
-
-The detail description for each file of the "python" foler is as following:
 
 
 

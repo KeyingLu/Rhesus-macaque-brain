@@ -161,6 +161,11 @@ vsd_data <- limma::removeBatchEffect(assay(vsd), vsd$Species)
 df <- vsd_data
 dim(df) # 14528   264
 
+vsd_data_save <- data.frame(GeneID=rownames(vsd_data), 
+                            vsd_data)
+write.table(vsd_data_save, "SourceData/SourceData_Fig.2a.txt",
+            row.names = F, col.names = T, quote = F, sep="\t")
+
 
 seed = 1
 for(i in seed){
@@ -204,6 +209,9 @@ for(i in seed){
 }
 
 
+p <- data.frame(Sample_ID=rownames(p), p)
+write.table(p, "SourceData/Fig.2a.txt",
+            col.names = T, row.names = F, quote=F, sep="\t")
 
 
 
@@ -426,10 +434,6 @@ vsd_data <- limma::removeBatchEffect(assay(vsd), vsd$Species)
 df <- vsd_data
 dim(df) # 14528   264
 
-norCounts <- counts(Rhesus_human_Object, normalized=T)
-norCounts <- limma::removeBatchEffect(norCounts, vsd$Species)
-dim(norCounts) # 14528   264
-
 
 ### distance
 distance_res <- list()
@@ -461,19 +465,16 @@ for(i in 1:dim(combs)[1]){
 
 pp <- Reduce(rbind, distance_res)
 
-wilcox.test(value~species, d=pp[pp$region=="AMY_cortex",]) #  2.2e-16
-wilcox.test(value~species, d=pp[pp$region=="AMY_STR",]) # 0.02166
-wilcox.test(value~species, d=pp[pp$region=="cortex_HIP",]) # 2.2e-16
-wilcox.test(value~species, d=pp[pp$region=="AMY_CBC",]) # 0.09613
-wilcox.test(value~species, d=pp[pp$region=="CBC_HIP",]) # 0.328
-wilcox.test(value~species, d=pp[pp$region=="CBC_cortex",]) #  1.849e-11
 
 sapply(levels(pp$region), function(x){wilcox.test(value~species, d=pp[pp$region==x,])$p.value})
 
-
+pp <- pp[pp$region %in% c("AMY_cortex", "AMY_CBC", "cortex_HIP", "CBC_HIP"), 
+        c("value", "region", "species")]
 
 ggplot(pp, aes(y=value, x=species, fill=species, color=species)) +
   geom_boxplot(alpha=0.5) +
+  geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.5), 
+             color="black", size=0.2, alpha=0.5) +
   # geom_jitter(size=0.1, color="#3F60AC", width = 0.2) +
   theme_bw() +
   theme(panel.grid = element_blank(),
@@ -490,177 +491,8 @@ ggplot(pp, aes(y=value, x=species, fill=species, color=species)) +
   ylab("Distance")
 
 
-
-ggsave("human/PsychENCODE/Distance_AMY_or_HIP_vs_cortex_CBC_in_same_species.pdf",
-       width = 10, height = 5)
-
-
-
-
-###################################################################
-#       AMY/HIP vs Cortex in species, respectively (dif genes)    #
-###################################################################
-library(DESeq2)
-library(limma)
-library(ggplot2)
-library(RColorBrewer)
-library(reshape2)
-setwd("/mnt/data2/Rhesus_brain")
-load("human/PsychENCODE/orth_colData.RData")
-load("human/PsychENCODE/Rhesus_human_Object.RData")
-
-vsd <- varianceStabilizingTransformation(Rhesus_human_Object, blind=FALSE)
-norCounts <- counts(Rhesus_human_Object, normalized=T)
-norCounts <- limma::removeBatchEffect(norCounts, vsd$Species)
-dim(norCounts) # 14528   264
-
-
-### compare
-compare_res <- list()
-compare_genes_list <- list()
-
-for(region in c("AMY", "HIP")){
-  for(species in c("human", "Rhesus")){
-    for(region2 in c("CBC", "STR", "THA", "cortex")){
-      sub_colData <- orth_colData[orth_colData$Region %in% c(region, region2) & orth_colData$Species == species, ]
-      df <- norCounts[, rownames(sub_colData)]
-      testInfo <- sub_colData$Region
-      ##
-      pvalue <- apply(df, 1, function(x){wilcox.test(x ~ testInfo)$p.value})
-      padj <- p.adjust(pvalue, method = "fdr", n=length(pvalue))
-      mean <-  sapply(unique(testInfo), function(x){rowMeans(df[,testInfo==x])})
-      p <- data.frame(pvalue, padj)
-      log2FoldChange <- log2(mean[,region]/mean[,region2])
-      res <- data.frame(p, log2FoldChange)
-      res <- res[complete.cases(res),]
-      res <- res[order(res$padj),]
-      res <- data.frame(res, region1=region, region2=region2, species=species)
-      cob <- paste(region, region2, species, sep="_")
-      compare_res[[cob]] <- res
-      # res <- compare_res[[cob]]
-      hyper <- res[res$padj<0.05 & res$log2FoldChange>1, ]
-      hypo <- res[res$padj<0.05 & res$log2FoldChange< -1, ]
-      compare_genes_list[[cob]] <- list(hyper=hyper, hypo=hypo)
-    }
-  }
-}
-
-
-
-pp <- lapply(compare_genes_list, function(x){Reduce(rbind, x)})
-pp <- Reduce(rbind, pp)
-
-pp$state <- as.character(pp$region1)
-pp$state[pp$log2FoldChange>1] <- "hyper"
-pp$state[pp$log2FoldChange< -1] <- "hypo"
-pp$state <- paste(pp$region1, pp$region2, pp$state, sep="_")
-
-res <- table(pp$species, pp$state)
-res <- as.array(res)
-res <- melt(res)
-colnames(res) <- c("Species", "VS", "Counts")
-
-
-ggplot(res, aes(x=Species, y=Counts, fill=Species)) +
-  geom_bar(stat = "identity") +
-  theme_bw() +
-  theme(panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5),
-        axis.text.x = element_text(angle = 0, hjust = 0.5, vjust=0.5, color = "black"),
-        axis.text.y = element_text(color = "black"),
-        # strip.text = element_text(size=rel(1)),
-        strip.background = element_rect(fill="white")) +
-  facet_wrap(~VS, nrow=4) +
-  scale_fill_manual(values =  c(Rhesus=brewer.pal(9,"Blues")[6], human=brewer.pal(9,"Reds")[6]))
-
-ggsave("human/PsychENCODE/region1_vs_region2_specific_genes_bar.pdf", width = 7, height = 5)
-
-
-
-
-
-###################################################################
-#                  pairwise compare (dif genes)                   #
-###################################################################
-library(DESeq2)
-library(limma)
-library(ggplot2)
-library(RColorBrewer)
-library(reshape2)
-library(gtools)
-setwd("/mnt/data2/Rhesus_brain")
-load("human/PsychENCODE/orth_colData.RData")
-load("human/PsychENCODE/Rhesus_human_Object.RData")
-
-vsd <- varianceStabilizingTransformation(Rhesus_human_Object, blind=FALSE)
-norCounts <- counts(Rhesus_human_Object, normalized=T)
-norCounts <- limma::removeBatchEffect(norCounts, vsd$Species)
-dim(norCounts) # 14528   264
-
-
-### compare
-compare_res <- list()
-compare_genes_list <- list()
-
-combs <- combinations(length(unique(orth_colData$Region)), 2, unique(orth_colData$Region))
-
-for(i in 1:dim(combs)[1]){
-  region1 <- combs[i, 1]
-  region2 <- combs[i, 2]
-  for(species in c("human", "Rhesus")){
-    sub_colData <- orth_colData[orth_colData$Region %in% c(region1, region2) & orth_colData$Species == species, ]
-    df <- norCounts[, rownames(sub_colData)]
-    testInfo <- sub_colData$Region
-    ##
-    pvalue <- apply(df, 1, function(x){wilcox.test(x ~ testInfo)$p.value})
-    padj_fdr <- p.adjust(pvalue, method = "fdr", n=length(pvalue))
-    padj_BH <- p.adjust(pvalue, method = "fdr", n=length(pvalue))
-    mean <-  sapply(unique(testInfo), function(x){rowMeans(df[,testInfo==x])})
-    p <- data.frame(pvalue, padj_fdr, padj_BH)
-    log2FoldChange <- log2(mean[,region1]/mean[,region2])
-    res <- data.frame(p, log2FoldChange)
-    res <- res[complete.cases(res),]
-    res <- res[order(res$padj),]
-    res <- data.frame(res, region1=region1, region2=region2, species=species)
-    cob <- paste(region1, region2, species, sep="_")
-    compare_res[[cob]] <- res
-    # res <- compare_res[[cob]]
-    hyper <- res[res$padj<0.05 & res$log2FoldChange>1, ]
-    hypo <- res[res$padj<0.05 & res$log2FoldChange< -1, ]
-    compare_genes_list[[cob]] <- list(hyper=hyper, hypo=hypo)
-  }
-}
-
-
-
-pp <- lapply(compare_genes_list, function(x){Reduce(rbind, x)})
-pp <- Reduce(rbind, pp)
-
-pp$state <- as.character(pp$region1)
-pp$state[pp$log2FoldChange>1] <- "hyper"
-pp$state[pp$log2FoldChange< -1] <- "hypo"
-pp$VS <- paste(pp$region1, pp$region2, sep="_")
-
-res <- table(pp$species, pp$VS, pp$state)
-res <- as.array(res)
-res <- melt(res)
-colnames(res) <- c("Species", "VS", "state", "Counts")
-res$Counts[res$state=="hypo"] <- -res$Counts[res$state=="hypo"]
-
-
-ggplot(res, aes(x=Species, y=Counts, fill=state)) +
-  geom_bar(stat = "identity") +
-  theme_bw() +
-  theme(panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5),
-        axis.text.x = element_text(angle = 0, hjust = 0.5, vjust=0.5, color = "black"),
-        axis.text.y = element_text(color = "black"),
-        # strip.text = element_text(size=rel(1)),
-        strip.background = element_rect(fill="white")) +
-  facet_wrap(~VS, nrow=3) +
-  scale_fill_manual(values =  c(hyper=brewer.pal(9,"Blues")[6], hypo=brewer.pal(9,"Reds")[6]))
-
-ggsave("human/PsychENCODE/region1_vs_region2_specific_genes_bar.pdf", width = 10, height = 5)
+ggsave("human/PsychENCODE/Distance_AMY_or_HIP_vs_cortex_CBC_in_same_species1226.pdf",
+       width =10, height = 3)
 
 
 
@@ -721,3 +553,7 @@ for(top in c(1000, 2000, 5000)){
   filename = paste("human/PsychENCODE/Rhesus_human_cor_violin_ExprTop", top, ".pdf")
   ggsave(filename, height = 6.4, width = 6.6)
 }
+
+
+
+

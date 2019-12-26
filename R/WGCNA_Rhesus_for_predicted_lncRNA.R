@@ -251,6 +251,7 @@ save(modTraitCor, modTraitP,
 ##### plot cor
 library(pheatmap)
 library(RColorBrewer)
+load("revise0530/transcripts_count_res_with_TACO_gtf/WGCNA_modTraitCor_for_SR_merge_lncRNA.RData")
 pheatmap(
   modTraitCor,
   main="Module-Region_trait relationships",
@@ -272,6 +273,12 @@ pheatmap(
 
 modTraitCor_help <- modTraitCor
 sum(modTraitCor>=0.80 & modTraitP<0.01) 
+
+p <- data.frame(gene=rownames(modTraitCor), modTraitCor)
+write.table(p, "SourceData/Fig.S6a.txt",
+            col.names = T, row.names = F, quote=F, sep="\t")
+
+
 
 
 ########### 保存 module trans_id
@@ -312,6 +319,7 @@ for(module in region_modules){
 #### bar plots showing the expression of MEs across brain
 library(reshape2)
 library(wesanderson)
+library(reshape2)
 load("revise0530/transcripts_count_res_with_TACO_gtf/WGCNA_modTraitCor_for_SR_merge_lncRNA.RData")
 region_modules <- apply(modTraitCor, 2, function(x){rownames(modTraitCor)[which(x>=0.8)]})
 region_modules <- unlist(region_modules)
@@ -319,27 +327,16 @@ region_modules <- unlist(region_modules)
 pp <- data.frame(MEsWW[, region_modules], SR=datTraits$SR_merge)
 pp <- melt(pp)
 head(pp)
-colnames(pp)[2:3] <- c("Module", "expression")
-p <- matrix(0, ncol=4, nrow=length(unique(pp$SR))*length(region_modules))
-colnames(p) <- c("SR", "Module", "mean", "se")
-j=1
-for(r in unique(pp$SR)){
-  for(i in unique(pp$Module)){
-    mean <- mean(pp$expression[pp$SR==r & pp$Module==i])
-    se <- sd(pp$expression[pp$SR==r & pp$Module==i])
-    p[j, ] <- c(r, i, mean, se)
-    j = j+1
-  }
-}
 
 
-p <- data.frame(p)
-p$mean <- as.numeric(as.character(p$mean))
-p$se <- as.numeric(as.character(p$se))
-head(p)
-str(p)
-ggplot(p, aes(x=SR, y=mean, fill=Module)) +
-  geom_bar(stat="identity") +
+colors <- c(ME3="#cfbddc",
+            ME2="#247ba0",
+            ME7="#74a089", 
+            ME4="#f25f5c",
+            ME5="#ffe066")
+
+ggplot(pp, aes(x=SR, y=value, fill=variable, color=variable)) +
+  geom_boxplot(outlier.size = 0.7) +
   theme_bw() +
   theme(panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5, face="bold"),
@@ -347,15 +344,30 @@ ggplot(p, aes(x=SR, y=mean, fill=Module)) +
         text = element_text(face="bold"),
         strip.text = element_text(size=rel(1)),
         strip.background = element_rect(fill="white")) +
-  scale_fill_manual(values = c(wes_palette("Royal2"), wes_palette("GrandBudapest1"),wes_palette("Chevalier1")[3:4])) +
-  facet_wrap(~Module,ncol=3, scales="free_y") +
-  geom_errorbar((aes(ymin=mean-se, ymax=mean+se))) +
-  guides(fill=F) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  facet_wrap(~variable,ncol=2, scales="free_y") +
+  stat_summary(geom = "point", shape=23, fill="white",size=1,fun.y="median") +
+  guides(fill=F, color=F) +
   xlab("") +
   ylab("Module eigengene expression")
 
 ggsave("revise0530/transcripts_count_res_with_TACO_gtf/Module_eigengene_expression_lncRNA.pdf", 
-       width = 10, height = 6)
+       width = 4, height = 4.5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

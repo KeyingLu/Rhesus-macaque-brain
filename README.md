@@ -18,7 +18,7 @@ human_Rhesus_PsychEncode.R: This file is the script for combined human and rhesu
 
 Rhesus_human_orthlog_trans.R: This file is de novo transcripts results script
 
-Rhesus_peak_count.R: This file is the script for ATAC-seq signal.
+DiffBind.R: This file is the script for ATAC-seq signal.
 
 Rhesus_trans_count_with_TACO_gtf.R: This file is normalization for assembly transcripts count matrix
 
@@ -28,7 +28,9 @@ WGCNA_Rhesus_cortex.R: This file is the co-expression analysis code using the WG
 
 WGCNA_Rhesus_for_predicted_lncRNA.R: This file is the co-expression analysis code using the WGCNA for all region samples in predicted lncRNA. 
 
-WGCNA_Rhesus_for_predicted_lncRNA_cortex.R: This file is the co-expression analysis code using the WGCNA for all cortex samples in predicted lncRNA.
+Deconvolution.R: This file is deconvolution analysis for bulk samples.
+
+mixed_effect_model_test.R: This file is the main differential analysis script for age and sex.
 
 
 
